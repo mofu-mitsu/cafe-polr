@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- SEO & OGP Meta Tags -->
+    <title>Café PoLR | ソシオニクス深層脆弱診断</title>
+    <meta name="description" content="ソシオニクスにおけるあなたの最も脆弱な機能（PoLR - 第4機能）を、ストレス環境での「行動」から診断する理不尽なカフェ型診断ツールです。">
+    <meta property="og:title" content="Café PoLR | ソシオニクス深層脆弱診断">
+    <meta property="og:description" content="あなたの「一番触れられたくない心の盲点」はどこ？ 8つの理不尽なストレス環境（ギミック）での行動から、ソシオニクスの脆弱機能を診断します。">
+    <meta property="og:image" content="https://mofu-mitsu.github.io/cafe-polr/ogp.png">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://mofu-mitsu.github.io/cafe-polr/">
+    <meta name="twitter:card" content="summary_large_image">
+    
+    <!-- ファビコン（💡の絵文字をSVGで生成） -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text x=%2250%%22 y=%2250%%22 style=%22dominant-baseline:central;text-anchor:middle;font-size:90px;%22>💡</text></svg>">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Shippori+Mincho:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <audio id="bgm-audio" loop src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=lofi-study-112191.mp3"></audio>
+    <audio id="se-explode" src="https://actions.google.com/sounds/v1/explosions/explosion_large.ogg"></audio>
+
+    <div id="audio-toggle" class="audio-btn"><i class="fa-solid fa-volume-xmark"></i></div>
+    <div id="toast-container"></div>
+    <div id="ambient-light"></div>
+    <div id="particles"></div>
+
+    <!-- タイトル画面 -->
+    <div id="title-screen" class="screen active">
+        <div class="menu-board">
+            <h1>Café PoLR</h1>
+            <h2>ソシオニクス深層脆弱診断</h2>
+            <div class="divider"><i class="fa-solid fa-utensils"></i></div>
+            
+            <p class="intro-text">
+                ☕「いらっしゃいませ。」<br><br>
+                「このカフェでは、お客様の『最も苦手なこと』をメニューとしてお出ししています。」<br>
+                「時には不快に感じる質問や、答えづらい理不尽な内容が含まれるかもしれません。」<br>
+                「また、当店の案内係は少々個性的です。」<br>
+                「苦手な方は、この先へ進まないことをおすすめします。」
+            </p>
+
+            <div class="input-group">
+                <input type="text" id="self-type" placeholder="ご自身のタイプをご記入ください（任意）">
+            </div>
+
+            <div class="agreement-box">
+                <p class="agreement-title">📜 入店確認</p>
+                <label class="check-item"><input type="checkbox" class="terms-check"><span>苦手な質問や理不尽なギミックが表示されることを理解しました。</span></label>
+                <label class="check-item"><input type="checkbox" class="terms-check"><span>案内キャラクターの強烈な個性を、作品の一部として受け入れます。</span></label>
+                <label class="check-item"><input type="checkbox" class="terms-check"><span>診断結果やエラーに不満を感じても、キャラクターへ怒らないことを約束します。🥺</span></label>
+            </div>
+
+            <div id="lamp-container" class="disabled">
+                <i id="lamp-icon" class="fa-regular fa-lightbulb"></i>
+                <p id="lamp-text">規約に同意してランプを点ける</p>
+            </div>
+        </div>
+        <!-- ホームリンク -->
+        <a href="https://mofu-mitsu.github.io/lab.html" class="home-link"><i class="fa-solid fa-house"></i> LABホームへ戻る</a>
+    </div>
+
+    <!-- 診断画面 -->
+    <div id="quiz-screen" class="screen hidden">
+        <div class="menu-board gimmick-board">
+            <div class="progress-container"><span id="progress-text">Course 1 / 9</span></div>
+            <div id="gimmick-container"></div>
+        </div>
+    </div>
+
+    <!-- 結果画面 -->
+    <div id="result-screen" class="screen hidden">
+        <div id="capture-area" class="menu-board capture-board">
+            <h2><i class="fa-solid fa-bell-concierge"></i> お会計</h2>
+            <div id="result-content"></div>
+        </div>
+        <div class="action-log-container">
+            <h3 style="margin-top:0; font-size:1.1rem;"><i class="fa-solid fa-receipt"></i> 観測ログ（レシート）</h3>
+            <div id="action-log-content"></div>
+            <div style="display:flex; gap:10px; margin-top:15px; justify-content:center; flex-wrap:wrap;">
+                <button id="copy-log-btn" class="btn"><i class="fa-regular fa-copy"></i> ログをコピー</button>
+                <button id="save-img-btn" class="btn primary-btn"><i class="fa-solid fa-camera"></i> 結果を画像で保存</button>
+            </div>
+        </div>
+        <button id="retry-btn" class="btn" style="margin-top:20px;">退店する（もう一度）</button>
+        <!-- ホームリンク -->
+        <a href="https://mofu-mitsu.github.io/lab.html" class="home-link" style="margin-top:20px;"><i class="fa-solid fa-house"></i> LABホームへ戻る</a>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
