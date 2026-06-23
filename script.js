@@ -1,4 +1,3 @@
-// GASのURL
 const GAS_URL = "https://script.google.com/macros/s/AKfycbzB4ZyPdqFHuVW4vBx3IdeMLICz-vikEXTTkb1uI8hkUrbxRh5S-AqaPPAeBs0B1nSh/exec"; 
 
 let currentStep = 1;
@@ -135,7 +134,7 @@ function loadFeGimmick(container) {
                 <div class="input-group"><label style="color:var(--danger-color);"><i class="fa-solid fa-pen-nib"></i> 追記：ねえ、今どんな気持ち？🥺</label><textarea id="fe-impression" rows="3" placeholder="ここに入力しないと進めないよ♡" required></textarea></div>
                 <button id="fe-next" class="btn danger-btn">屈辱に耐えて次へ進む</button>
             `;
-            setTimeout(() => {
+            setTimeout(() => { 
                 document.getElementById("fe-next").addEventListener("click", () => {
                     let imp = document.getElementById("fe-impression").value.trim();
                     if(imp === "") { showToast("🥺「ねぇ、ログが空っぽだよ？ ちゃんと入力して♡」"); } 
@@ -146,7 +145,8 @@ function loadFeGimmick(container) {
             isCleared = true; scores.Fe += 1; hasSeTalent = true; logAction("Course 1", "物理/言葉による拒絶(Se才能)");
             showToast("【システム通知】対象の物理的排除（Se）の才能を検出しました。"); setTimeout(nextStep, 1500);
         } else if (feAcceptRegex.test(val)) {
-            isCleared = true; logAction("Course 1", "好意的なパケット(Fe迎合)"); showToast("🥺「やっと素直なパケットを送信してくれたのね♡」"); setTimeout(nextStep, 1500);
+            // ★ダーリンちゃんのセリフ変更
+            isCleared = true; logAction("Course 1", "好意的なパケット(Fe迎合)"); showToast("🥺「あら、ダーリン♡ やっと素直なパケットを送信してくれたのね」"); setTimeout(nextStep, 2000);
         } else if (!val || val.length === 0) {
             isCleared = true;
             container.innerHTML = `
@@ -156,7 +156,7 @@ function loadFeGimmick(container) {
                     <button id="fe-btn-b" class="btn">B: 感情のやり取り自体、時間の無駄。</button>
                 </div>
             `;
-            setTimeout(() => {
+            setTimeout(() => { 
                 document.getElementById("fe-btn-a").addEventListener("click", () => { scores.Fe += 1; hasTiTalent = true; logAction("Course 1", "A:定義の欠如を選択 (Ti防衛)"); nextStep(); });
                 document.getElementById("fe-btn-b").addEventListener("click", () => { scores.Fe += 3; logAction("Course 1", "B:時間の無駄を選択 (Fe脆弱)"); nextStep(); });
             }, 200);
@@ -193,7 +193,10 @@ function loadSeGimmick(container) {
             bug.innerHTML = "💥"; bug.classList.add("exploded"); playExplosion();
             hasSeTalent = true; logAction("Course 2 (Se)", "芋虫を30回タップして爆破");
             showToast("対象を物理的に圧殺しました。"); setTimeout(nextStep, 1500);
-        } else if(tapCount === 1) { showToast("🐛「ここは俺の管轄だ。申請書がない限り通さん」"); }
+        } else {
+            // ★タップ時にもランダムで怒る
+            showToast("🐛「" + caterpillarLines.criticisms[Math.floor(Math.random() * caterpillarLines.criticisms.length)] + "」");
+        }
     });
 
     goalBtn.addEventListener("click", () => {
@@ -214,7 +217,7 @@ function loadSeGimmick(container) {
     };
     bug.onDragMove = (diffX, diffY, initX, initY) => {
         if(isSeCleared) return;
-        bug.style.left = (initX + diffX * 0.3) + 'px'; bug.style.top = (initY + diffY * 0.3) + 'px'; // 重力
+        bug.style.left = (initX + diffX * 0.3) + 'px'; bug.style.top = (initY + diffY * 0.3) + 'px'; 
     };
     bug.onDragEnd = () => {
         if(isSeCleared) return;
@@ -238,20 +241,20 @@ function loadSeGimmick(container) {
             isSeCleared = true; hasSeTalent = true; goalBtn.style.display = "none"; logAction("Course 2 (Se)", `申請書に暴言:「${val}」`);
             showToast("🐛「ひっ…！わ、わかった通れ！」威圧(Se)による突破を確認。"); bug.style.display = "none"; setTimeout(nextStep, 1500);
         } else if(val.length >= 5) {
-            isSeCleared = true; logAction("Course 2 (Se)", `申請書を提出:「${val}」`);
+            isSeCleared = true; logAction("Course 2 (Se)", `律儀に申請書を提出:「${val}」`);
             bug.style.display = "none"; goalBtn.style.display = "none";
             document.getElementById("se-form-area").innerHTML = `
                 <p style="font-size:0.9rem; font-weight:bold; color:var(--danger-color);">🚨 申請書を受理。追加の質問に答えてください。</p>
                 <p style="font-size:0.9rem; margin-bottom:10px;">「力ずくで排除せず、わざわざ申請書を書いた理由は？」</p>
                 <div style="display:flex; flex-direction:column; gap:10px;">
-                    <button id="se-btn-avoid" class="btn">A: 「力ずくでどかすと波風が立って面倒だから」</button>
+                    <button id="se-btn-avoid" class="btn">A: 「力ずくでどかすと面倒なことになりそうだから」</button>
                     <button id="se-btn-rule" class="btn">B: 「ルールとして決まっているなら従うべきだから」</button>
                     <button id="se-btn-eff" class="btn">C: 「力ずくより、申請した方が結果的に早いと判断したから」</button>
                 </div>
             `;
             setTimeout(() => { 
-                document.getElementById("se-btn-avoid").addEventListener("click", () => { scores.Se += 3; logAction("Course 2 (Se追撃)", "A: トラブル回避 (EII的Se脆弱)"); showToast("他者との衝突を回避する傾向（Se脆弱）を確認しました。"); setTimeout(nextStep, 1500); });
-                document.getElementById("se-btn-rule").addEventListener("click", () => { scores.Se += 3; hasTiTalent = true; logAction("Course 2 (Se追撃)", "B: ルール遵守 (LII的Se脆弱・Ti防衛)"); showToast("規則への従順性（Ti）と衝突回避（Se脆弱）を確認しました。"); setTimeout(nextStep, 1500); });
+                document.getElementById("se-btn-avoid").addEventListener("click", () => { scores.Se += 3; logAction("Course 2 (Se追撃)", "A: トラブル回避 (純粋なSe脆弱)"); showToast("他者との衝突を回避する傾向（Se脆弱）を確認しました。"); setTimeout(nextStep, 1500); });
+                document.getElementById("se-btn-rule").addEventListener("click", () => { scores.Se += 3; hasTiTalent = true; logAction("Course 2 (Se追撃)", "B: ルール遵守 (Ti防衛・Se脆弱)"); showToast("規則への従順性（Ti）と衝突回避（Se脆弱）を確認しました。"); setTimeout(nextStep, 1500); });
                 document.getElementById("se-btn-eff").addEventListener("click", () => { scores.Se += 1; logAction("Course 2 (Se追撃)", "C: 効率重視 (非脆弱)"); showToast("効率的なリソース管理を確認しました。"); setTimeout(nextStep, 1500); });
             }, 200);
         } else { showToast("🐛「文字数が足りない。出直してこい」"); }
@@ -396,23 +399,23 @@ function loadSiGimmick(container) {
     document.getElementById("si-submit").addEventListener("click", () => {
         let tRect = target.getBoundingClientRect(), sRect = stamp.getBoundingClientRect();
         let dx = Math.abs(tRect.left - sRect.left), dy = Math.abs(tRect.top - sRect.top);
-        if(dx <= 1 && dy <= 1) { 
-            logAction("Course 7 (Si)", "印鑑の1px単位の調整に成功"); showToast("完璧な配置を確認しました。"); setTimeout(nextStep, 1500); 
-        } else { 
-            scores.Si += 1; logAction("Course 7 (Si)", `印鑑ズレ提出 (X:${Math.round(dx)}px, Y:${Math.round(dy)}px)`);
-            showToast(`エラー：X座標が ${Math.round(dx)}px、Y座標が ${Math.round(dy)}px ズレています。`); 
-        }
+        if(dx <= 1 && dy <= 1) { logAction("Course 7 (Si)", "印鑑の1px単位の調整に成功"); showToast("完璧な配置を確認しました。"); setTimeout(nextStep, 1500); } 
+        else { scores.Si += 1; logAction("Course 7 (Si)", `印鑑ズレ提出 (X:${Math.round(dx)}px, Y:${Math.round(dy)}px)`); showToast(`エラー：X座標が ${Math.round(dx)}px、Y座標が ${Math.round(dy)}px ズレています。`); }
     });
-    document.getElementById("si-skip").addEventListener("click", () => { scores.Si += 3; logAction("Course 7 (Si)", "微細な作業を放棄"); showToast("非効率な作業を放棄しました。"); setTimeout(nextStep, 600); });
+    document.getElementById("si-skip").addEventListener("click", () => { scores.Si += 3; logAction("Course 7 (Si)", "微細な作業を放棄"); setTimeout(nextStep, 600); });
 }
 
-/* === 8. Ni脆弱 === */
+/* === 8. Ni脆弱（年号の自動計算化） === */
 function loadNiGimmick(container) {
+    // ★現在年と10年後を動的に取得
+    let currentYear = new Date().getFullYear();
+    let futureYear = currentYear + 10;
+
     container.innerHTML = `
     <div style="text-align:left; width:100%;">
-        <p style="margin-bottom:15px;"><strong>【重要・承認待ち】</strong>プロジェクト開始の前提条件として、<strong>【今から10年後の本日】</strong>のタスクスケジュールを厳密に確定してください。</p>
+        <p style="margin-bottom:15px;"><strong>【重要・承認待ち】</strong>プロジェクト開始の前提条件として、<strong>【今から10年後（${futureYear}年）の本日】</strong>のタスクスケジュールを厳密に確定してください。</p>
         <div style="padding:15px; border:1px solid #999; background:#fff; margin-bottom:15px;">
-            <span style="color:#a85c5c;">[System]</span> 現在時刻：2026年<br><span style="color:#5ca873;">[10年後の予定]</span><br>
+            <span style="color:#a85c5c;">[System]</span> 現在時刻：${currentYear}年<br><span style="color:#5ca873;">[${futureYear}年の予定]</span><br>
             🕒 09:00 〜 <input type="text" id="ni-input" style="width:100%; padding:8px; box-sizing:border-box; margin-top:5px;" placeholder="10年後のタスクを記述"> 
         </div>
         <button id="ni-submit" class="btn primary-btn">スケジュールを確定</button>
@@ -468,7 +471,7 @@ function loadNiGimmick(container) {
                     scores.Ni += 3; showToast("長期的な時間感覚の欠如（純粋なNi脆弱）を確認しました。"); setTimeout(nextStep, 1500);
                 });
             }, 200);
-        } else if(text.length >= 10) { showToast("10年後の長期的な予測（Ni）を適切に構築しました。"); setTimeout(nextStep, 2000);
+        } else if(text.length >= 10) { showToast("長期的な予測（Ni）を適切に構築しました。"); setTimeout(nextStep, 2000);
         } else { scores.Ni += 1; showToast("曖昧な予測を検知しました。"); setTimeout(nextStep, 2000); }
     });
 }
