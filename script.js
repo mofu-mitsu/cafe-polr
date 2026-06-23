@@ -132,7 +132,7 @@ function loadFeGimmick(container) {
             container.innerHTML = `
                 <div style="text-align:left; font-size:0.9rem; line-height:1.6; background:#faf8f5; padding:15px; border-radius:5px; border:1px solid var(--border-color); margin-bottom:15px;">🥺${darlingLines.extremeRejection}</div>
                 <div style="text-align:left; font-size:0.9rem; font-weight:bold; color:var(--danger-color); background:#fff5f5; padding:10px; border-left:4px solid var(--danger-color); margin-bottom:20px;">${darlingLines.errorMsg}</div>
-                <div class="input-group"><label style="color:var(--danger-color);"><i class="fa-solid fa-pen-nib"></i> 追記：今、どんな気持ちですか？🥺</label><textarea id="fe-impression" rows="3" placeholder="ここに入力しないと進めないよ♡" required></textarea></div>
+                <div class="input-group"><label style="color:var(--danger-color);"><i class="fa-solid fa-pen-nib"></i> 追記：ねえ、今どんな気持ち？🥺</label><textarea id="fe-impression" rows="3" placeholder="ここに入力しないと進めないよ♡" required></textarea></div>
                 <button id="fe-next" class="btn danger-btn">屈辱に耐えて次へ進む</button>
             `;
             setTimeout(() => {
@@ -146,7 +146,7 @@ function loadFeGimmick(container) {
             isCleared = true; scores.Fe += 1; hasSeTalent = true; logAction("Course 1", "物理/言葉による拒絶(Se才能)");
             showToast("【システム通知】対象の物理的排除（Se）の才能を検出しました。"); setTimeout(nextStep, 1500);
         } else if (feAcceptRegex.test(val)) {
-            isCleared = true; logAction("Course 1", "好意的なパケット(Fe迎合)"); showToast("🥺「えへへ、ありがとう♡」"); setTimeout(nextStep, 1500);
+            isCleared = true; logAction("Course 1", "好意的なパケット(Fe迎合)"); showToast("🥺「やっと素直なパケットを送信してくれたのね♡」"); setTimeout(nextStep, 1500);
         } else if (!val || val.length === 0) {
             isCleared = true;
             container.innerHTML = `
