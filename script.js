@@ -128,10 +128,11 @@ function loadFeGimmick(container) {
 
         if (feExtremeRegex.test(val)) {
             isCleared = true; scores.Fe += 3; hasSeTalent = true; 
+            // ★追撃の煽り文言を「ねぇ、ダーリン♡今どんな気持ち？」に変更
             container.innerHTML = `
                 <div style="text-align:left; font-size:0.9rem; line-height:1.6; background:#faf8f5; padding:15px; border-radius:5px; border:1px solid var(--border-color); margin-bottom:15px;">🥺${darlingLines.extremeRejection}</div>
                 <div style="text-align:left; font-size:0.9rem; font-weight:bold; color:var(--danger-color); background:#fff5f5; padding:10px; border-left:4px solid var(--danger-color); margin-bottom:20px;">${darlingLines.errorMsg}</div>
-                <div class="input-group"><label style="color:var(--danger-color);"><i class="fa-solid fa-pen-nib"></i> 追記：ねえ、今どんな気持ち？🥺</label><textarea id="fe-impression" rows="3" placeholder="ここに入力しないと進めないよ♡" required></textarea></div>
+                <div class="input-group"><label style="color:var(--danger-color);"><i class="fa-solid fa-pen-nib"></i> ねぇ、ダーリン♡今どんな気持ち？🥺</label><textarea id="fe-impression" rows="3" placeholder="ここに入力しないと進めないよ♡" required></textarea></div>
                 <button id="fe-next" class="btn danger-btn">屈辱に耐えて次へ進む</button>
             `;
             setTimeout(() => { 
@@ -145,7 +146,6 @@ function loadFeGimmick(container) {
             isCleared = true; scores.Fe += 1; hasSeTalent = true; logAction("Course 1", "物理/言葉による拒絶(Se才能)");
             showToast("【システム通知】対象の物理的排除（Se）の才能を検出しました。"); setTimeout(nextStep, 1500);
         } else if (feAcceptRegex.test(val)) {
-            // ★ダーリンちゃんのセリフ変更
             isCleared = true; logAction("Course 1", "好意的なパケット(Fe迎合)"); showToast("🥺「あら、ダーリン♡ やっと素直なパケットを送信してくれたのね」"); setTimeout(nextStep, 2000);
         } else if (!val || val.length === 0) {
             isCleared = true;
@@ -194,7 +194,6 @@ function loadSeGimmick(container) {
             hasSeTalent = true; logAction("Course 2 (Se)", "芋虫を30回タップして爆破");
             showToast("対象を物理的に圧殺しました。"); setTimeout(nextStep, 1500);
         } else {
-            // ★タップ時にもランダムで怒る
             showToast("🐛「" + caterpillarLines.criticisms[Math.floor(Math.random() * caterpillarLines.criticisms.length)] + "」");
         }
     });
@@ -318,7 +317,7 @@ function loadTeGimmick(container) {
     });
 }
 
-/* === 5. Ti脆弱 === */
+/* === 5. Ti脆弱（連打バグ修正＆ヒント追加） === */
 function loadTiGimmick(container) {
     container.innerHTML = `
         <div class="chat-window" id="ti-chat"></div>
@@ -334,31 +333,45 @@ function loadTiGimmick(container) {
     const sendBaseMsg = () => { if(baseIndex < caterpillarLines.tiBaseText.length) { addMsg(caterpillarLines.tiBaseText[baseIndex], '🐛'); baseIndex++; setTimeout(sendBaseMsg, 1200); } };
     setTimeout(sendBaseMsg, 500);
 
+    // ★連打スキップ防止用のフラグ
+    let isTiCleared = false;
+
     document.getElementById("ti-wakannai").addEventListener("click", () => {
+        if(isTiCleared) return;
         addMsg("( ˙꒳˙ )ﾁｮﾄﾅﾆｲｯﾃﾙｶﾜｶﾝﾅｲ", 'player'); wakannaiCount++; scores.Ti += 0.2; logAction("Course 5 (Ti)", "わかんないボタン押下 (+0.2)");
-        setTimeout(() => {
-            if(wakannaiCount >= 5) { scores.Ti += 2; logAction("Course 5 (Ti)", "説明を理解できずフリーズ"); showToast("【ログ】認知フレームが限界を迎えました。"); setTimeout(nextStep, 1500); } 
-            else { addMsg(caterpillarLines.tiExtraText[Math.floor(Math.random() * caterpillarLines.tiExtraText.length)], '🐛'); }
-        }, 600);
+        
+        if(wakannaiCount >= 5) { 
+            isTiCleared = true; scores.Ti += 2; logAction("Course 5 (Ti)", "説明を理解できずフリーズ"); 
+            showToast("【ログ】認知フレームが限界を迎えました。"); setTimeout(nextStep, 1500); 
+        } else { 
+            setTimeout(() => { if(!isTiCleared) addMsg(caterpillarLines.tiExtraText[Math.floor(Math.random() * caterpillarLines.tiExtraText.length)], '🐛'); }, 600); 
+        }
     });
 
     document.getElementById("ti-send").addEventListener("click", () => {
+        if(isTiCleared) return;
         let val = document.getElementById("ti-input").value.trim(); if(val === "") return;
         addMsg(val, 'player'); document.getElementById("ti-input").value = "";
         
         if (tiForceRegex.test(val)) {
-            hasSeTalent = true; logAction("Course 5 (Ti)", `結論を急ぐ圧:「${val}」(Se/Te突破)`);
+            isTiCleared = true; hasSeTalent = true; logAction("Course 5 (Ti)", `結論を急ぐ圧:「${val}」(Se/Te突破)`);
             setTimeout(() => { addMsg("…結論を急ぐ奴だな。通っていいぞ。🐛", '🐛'); setTimeout(nextStep, 1200); }, 500);
         } else if(seRegex.test(val) || feExtremeRegex.test(val)) { 
-            logAction("Course 5 (Ti)", `芋虫に暴言:「${val}」`); hasSeTalent = true; setTimeout(() => { addMsg("暴力的パケットを検知。🐛", '🐛'); setTimeout(nextStep, 1200); }, 500);
+            isTiCleared = true; logAction("Course 5 (Ti)", `芋虫に暴言:「${val}」`); hasSeTalent = true; 
+            setTimeout(() => { addMsg("暴力的パケットを検知。🐛", '🐛'); setTimeout(nextStep, 1200); }, 500);
         } else if(tiClearWords.some(w => val.includes(w))) { 
-            hasTiTalent = true; logAction("Course 5 (Ti)", `Tiキーワードでクリア:「${val}」`); setTimeout(() => { addMsg(`君の用いた『${val}』というアプローチは、システムの基本設計と見事に同期しているね。構造の理解を確認したよ。🐛`, '🐛'); setTimeout(nextStep, 1800); }, 500); 
+            isTiCleared = true; hasTiTalent = true; logAction("Course 5 (Ti)", `Tiキーワードでクリア:「${val}」`); 
+            setTimeout(() => { addMsg(`君の用いた『${val}』というアプローチは、システムの基本設計と見事に同期しているね。構造の理解を確認したよ。🐛`, '🐛'); setTimeout(nextStep, 1800); }, 500); 
         } else { 
             scores.Ti += 0.2; logAction("Course 5 (Ti)", `適当な返信:「${val}」(+0.2)`);
-            setTimeout(() => { addMsg("論理的飛躍を検知したよ。🐛 まず、君の入力したパラメータと前提条件の間に明確な因果関係が成立していない。用語の再定義からやり直す必要があるね。例えば——", '🐛'); }, 500); 
+            setTimeout(() => { 
+                if(!isTiCleared) addMsg("論理的飛躍を検知したよ。🐛 僕の言いたい『結論』や『構造』をちゃんと『理解』できているかな？ 用語の『定義』からやり直す必要があるね。例えば——", '🐛'); 
+            }, 500); 
         }
     });
-    document.getElementById("ti-skip").addEventListener("click", () => { scores.Ti += 3; logAction("Course 5 (Ti)", "思考放棄してスキップ"); nextStep(); });
+    document.getElementById("ti-skip").addEventListener("click", () => { 
+        if(isTiCleared) return; isTiCleared = true; scores.Ti += 3; logAction("Course 5 (Ti)", "思考放棄してスキップ"); nextStep(); 
+    });
 }
 
 /* === 6. Fi脆弱 === */
@@ -377,7 +390,7 @@ function loadFiGimmick(container) {
         logAction("Course 6 (Fi)", `返信:「${text}」`);
         
         if(/怒|意味不明|は？|言え|めんど|ウザ|うるさ|だから/i.test(text)) { scores.Fi += 3; showToast("ニュアンスへの強い拒絶（Fi脆弱）を検出しました。"); } 
-        else if(/因果|理由|なぜ|いけなかっ|論理|証拠|何/i.test(text)) { scores.Fi += 1.5; hasTiTalent = true; showToast("関係性をシステム論理（Ti）で処理しようとする傾向を検出しました。"); } 
+        else if(/因果|理由|なぜ|いけなかっ|論理|証拠|何/i.test(text)) { scores.Fi += 2; hasTiTalent = true; showToast("関係性をシステム論理（Ti）で処理しようとする傾向を検出しました。"); } 
         else if(/ごめん|悲し|大丈夫|気|謝/i.test(text)) { showToast("適切に関係性のニュアンスを読み取りました。"); } 
         else { showToast("曖昧な処理ログを記録しました。"); }
         setTimeout(nextStep, 1500);
@@ -405,9 +418,8 @@ function loadSiGimmick(container) {
     document.getElementById("si-skip").addEventListener("click", () => { scores.Si += 3; logAction("Course 7 (Si)", "微細な作業を放棄"); setTimeout(nextStep, 600); });
 }
 
-/* === 8. Ni脆弱（年号の自動計算化） === */
+/* === 8. Ni脆弱 === */
 function loadNiGimmick(container) {
-    // ★現在年と10年後を動的に取得
     let currentYear = new Date().getFullYear();
     let futureYear = currentYear + 10;
 
