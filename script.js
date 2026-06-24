@@ -8,6 +8,18 @@ let hasTiTalent = false;
 let actionLogs = [];
 let isAudioPlaying = false;
 
+// ★新規追加：裏で動くすべてのタイマーを一元管理して暴走を防ぐシステム
+let activeIntervals = [];
+function safeSetInterval(fn, delay) {
+    let id = setInterval(fn, delay);
+    activeIntervals.push(id);
+    return id;
+}
+function clearAllIntervals() {
+    activeIntervals.forEach(id => clearInterval(id));
+    activeIntervals = [];
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     initParticles(); initLampLogic(); initAudio();
     document.getElementById("copy-log-btn").addEventListener("click", copyActionLog);
@@ -80,7 +92,8 @@ function initLampLogic() {
         });
     });
     lampContainer.addEventListener('click', () => {
-        if (lampContainer.classList.contains('disabled')) return;
+        // ★修正：連打による多重起動を防止
+        if (lampContainer.classList.contains('disabled') || lampContainer.classList.contains('active')) return;
         lampContainer.classList.add('active'); document.body.classList.add('lamp-on');
         lampText.innerText = "☕「それでは、ご案内します。」";
         setTimeout(() => { document.getElementById("title-screen").classList.add("hidden"); document.getElementById("quiz-screen").classList.remove("hidden"); loadGimmick(currentStep); }, 2000);
@@ -88,9 +101,18 @@ function initLampLogic() {
 }
 
 function updateProgress() { document.getElementById("progress-text").innerText = `Course ${currentStep} / ${totalSteps}`; }
-function nextStep() { currentStep++; if (currentStep > totalSteps) showResult(); else loadGimmick(currentStep); }
+
+function nextStep() { 
+    currentStep++; 
+    if (currentStep > totalSteps) showResult(); 
+    else loadGimmick(currentStep); 
+}
 
 function loadGimmick(step) {
+    // ★重要：次のギミックに進む前に、裏で動いているすべてのタイマーと残骸要素を強制消去する
+    clearAllIntervals();
+    document.querySelectorAll('.fe-popup, .criticism-text').forEach(e => e.remove());
+
     updateProgress();
     const container = document.getElementById("gimmick-container"); container.innerHTML = "";
     switch(step) {
@@ -114,7 +136,9 @@ function loadFeGimmick(container) {
             <div class="input-group"><input type="text" id="fe-input" placeholder="応答を入力..."></div>
             <button id="fe-send" class="btn primary-btn">送信する</button>
         </div>`;
-    let popupInterval = setInterval(() => {
+    
+    // ★修正：safeSetIntervalを使用してタイマーを登録
+    let popupInterval = safeSetInterval(() => {
         let p = document.createElement("div"); p.className = "fe-popup"; p.innerText = darlingLines.popups[Math.floor(Math.random() * darlingLines.popups.length)];
         p.style.left = (Math.random() * 80) + "%"; p.style.top = (Math.random() * 80) + "%"; container.appendChild(p);
     }, 600);
@@ -128,7 +152,6 @@ function loadFeGimmick(container) {
 
         if (feExtremeRegex.test(val)) {
             isCleared = true; scores.Fe += 3; hasSeTalent = true; 
-            // ★追撃の煽り文言を「ねぇ、ダーリン♡今どんな気持ち？」に変更
             container.innerHTML = `
                 <div style="text-align:left; font-size:0.9rem; line-height:1.6; background:#faf8f5; padding:15px; border-radius:5px; border:1px solid var(--border-color); margin-bottom:15px;">🥺${darlingLines.extremeRejection}</div>
                 <div style="text-align:left; font-size:0.9rem; font-weight:bold; color:var(--danger-color); background:#fff5f5; padding:10px; border-left:4px solid var(--danger-color); margin-bottom:20px;">${darlingLines.errorMsg}</div>
@@ -206,7 +229,7 @@ function loadSeGimmick(container) {
     bug.onDragStart = () => {
         if(isSeCleared) return;
         bug.classList.add("shake"); 
-        critInterval = setInterval(() => {
+        critInterval = safeSetInterval(() => {
             let ct = document.createElement("div"); ct.className = "criticism-text";
             ct.innerText = caterpillarLines.criticisms[Math.floor(Math.random() * caterpillarLines.criticisms.length)];
             ct.style.fontSize = (Math.random() * 0.5 + 0.8) + "rem";
@@ -271,7 +294,7 @@ function loadNeGimmick(container) {
         <button id="ne-close" class="btn danger-btn" style="margin-top:30px;">パニック（処理を強制終了）</button>
     `;
     const changeText = () => { document.getElementById("ne-text").innerHTML = `【再計算】環境変動。<br>A：${Math.floor(Math.random()*100)}%<br>B：${Math.floor(Math.random()*100)}%<br>例外が${Math.floor(Math.random()*10000)}件発生。`; };
-    let shuffleInterval = setInterval(changeText, 1000);
+    let shuffleInterval = safeSetInterval(changeText, 1000);
     const finish = (isVuln, choice) => { clearInterval(shuffleInterval); logAction("Course 3 (Ne)", choice); if(isVuln) scores.Ne += 3; nextStep(); };
     document.getElementById("ne-btn-a").addEventListener("mouseover", changeText); document.getElementById("ne-btn-b").addEventListener("mouseover", changeText);
     document.getElementById("ne-btn-a").addEventListener("click", () => finish(false, "ルートAを選択"));
@@ -290,7 +313,7 @@ function loadTeGimmick(container) {
     let timeLeft = 15;
     const inputEl = document.getElementById("te-input");
     
-    let timerInterval = setInterval(() => {
+    let timerInterval = safeSetInterval(() => {
         timeLeft--; document.getElementById("te-timer").innerText = timeLeft;
         if(timeLeft <= 0) {
             clearInterval(timerInterval);
@@ -317,7 +340,7 @@ function loadTeGimmick(container) {
     });
 }
 
-/* === 5. Ti脆弱（連打バグ修正＆ヒント追加） === */
+/* === 5. Ti脆弱 === */
 function loadTiGimmick(container) {
     container.innerHTML = `
         <div class="chat-window" id="ti-chat"></div>
@@ -333,7 +356,6 @@ function loadTiGimmick(container) {
     const sendBaseMsg = () => { if(baseIndex < caterpillarLines.tiBaseText.length) { addMsg(caterpillarLines.tiBaseText[baseIndex], '🐛'); baseIndex++; setTimeout(sendBaseMsg, 1200); } };
     setTimeout(sendBaseMsg, 500);
 
-    // ★連打スキップ防止用のフラグ
     let isTiCleared = false;
 
     document.getElementById("ti-wakannai").addEventListener("click", () => {
@@ -357,21 +379,15 @@ function loadTiGimmick(container) {
             isTiCleared = true; hasSeTalent = true; logAction("Course 5 (Ti)", `結論を急ぐ圧:「${val}」(Se/Te突破)`);
             setTimeout(() => { addMsg("…結論を急ぐ奴だな。通っていいぞ。🐛", '🐛'); setTimeout(nextStep, 1200); }, 500);
         } else if(seRegex.test(val) || feExtremeRegex.test(val)) { 
-            isTiCleared = true; logAction("Course 5 (Ti)", `芋虫に暴言:「${val}」`); hasSeTalent = true; 
-            setTimeout(() => { addMsg("暴力的パケットを検知。🐛", '🐛'); setTimeout(nextStep, 1200); }, 500);
+            isTiCleared = true; logAction("Course 5 (Ti)", `芋虫に暴言:「${val}」`); hasSeTalent = true; setTimeout(() => { addMsg("暴力的パケットを検知。🐛", '🐛'); setTimeout(nextStep, 1200); }, 500);
         } else if(tiClearWords.some(w => val.includes(w))) { 
-            isTiCleared = true; hasTiTalent = true; logAction("Course 5 (Ti)", `Tiキーワードでクリア:「${val}」`); 
-            setTimeout(() => { addMsg(`君の用いた『${val}』というアプローチは、システムの基本設計と見事に同期しているね。構造の理解を確認したよ。🐛`, '🐛'); setTimeout(nextStep, 1800); }, 500); 
+            isTiCleared = true; hasTiTalent = true; logAction("Course 5 (Ti)", `Tiキーワードでクリア:「${val}」`); setTimeout(() => { addMsg(`君の用いた『${val}』というアプローチは、システムの基本設計と見事に同期しているね。構造の理解を確認したよ。🐛`, '🐛'); setTimeout(nextStep, 1800); }, 500); 
         } else { 
             scores.Ti += 0.2; logAction("Course 5 (Ti)", `適当な返信:「${val}」(+0.2)`);
-            setTimeout(() => { 
-                if(!isTiCleared) addMsg("論理的飛躍を検知したよ。🐛 僕の言いたい『結論』や『構造』をちゃんと『理解』できているかな？ 用語の『定義』からやり直す必要があるね。例えば——", '🐛'); 
-            }, 500); 
+            setTimeout(() => { if(!isTiCleared) addMsg("論理的飛躍を検知したよ。🐛 僕の言いたい『結論』や『構造』をちゃんと『理解』できているかな？ 用語の『定義』からやり直す必要があるね。例えば——", '🐛'); }, 500); 
         }
     });
-    document.getElementById("ti-skip").addEventListener("click", () => { 
-        if(isTiCleared) return; isTiCleared = true; scores.Ti += 3; logAction("Course 5 (Ti)", "思考放棄してスキップ"); nextStep(); 
-    });
+    document.getElementById("ti-skip").addEventListener("click", () => { if(isTiCleared) return; isTiCleared = true; scores.Ti += 3; logAction("Course 5 (Ti)", "思考放棄してスキップ"); nextStep(); });
 }
 
 /* === 6. Fi脆弱 === */
